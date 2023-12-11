@@ -1,2 +1,2 @@
 # route-checklist
-Angualr + Node.js route checklist
+Angular + Node.js route checklist

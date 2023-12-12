@@ -1,0 +1,47 @@
+h1 {
+  margin: 20px;
+  text-align: center;
+}
+
+hr {
+  margin: 20px;
+  color: #ddd;
+}
+
+.container {
+  margin: 20px;
+}
+
+.header {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+
+.add-button {
+  margin: 20px;
+}
+
+.edit-mode-container {
+  display: flex;
+  align-items: center;
+}
+
+.edit-mode {
+  border-radius: 2px;
+  border: 1px solid #ddd;
+  padding: 5px;
+  padding-left: 15px;
+  height: 30px;
+  margin-right: 5px;
+  font-size: 15px;
+  width: 100%;
+}
+
+.edit-mode:focus {
+  outline: none;
+}
+
+#search-bar {
+  width: 500px;
+}

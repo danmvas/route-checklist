@@ -1,0 +1,37 @@
+<h1>{{ title }}</h1>
+
+<hr />
+
+<div class="header">
+  <div>
+    <mat-form-field
+      appearance="outline"
+      id="search-bar"
+      class="example-form-field"
+      required="true"
+    >
+      <mat-label>Insira a rota</mat-label>
+      <input placeholder="" type="text" [(ngModel)]="searchString" />
+      @if (searchString) {
+      <button
+        matSuffix
+        mat-icon-button
+        aria-label="Clear"
+        (click)="searchString = ''"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+      }
+    </mat-form-field>
+  </div>
+  <div>
+    <button
+      (click)="onSubmit()"
+      class="add-button"
+      mat-raised-button
+      color="primary"
+    >
+      Adicionar
+    </button>
+  </div>
+</div>

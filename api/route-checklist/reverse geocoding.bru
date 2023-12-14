@@ -1,0 +1,17 @@
+meta {
+  name: reverse geocoding
+  type: http
+  seq: 2
+}
+
+get {
+  url: photon.komoot.io/reverse?lon=61.195088&lat=54.005826&lang=en
+  body: none
+  auth: none
+}
+
+query {
+  lon: 61.195088
+  lat: 54.005826
+  lang: en
+}

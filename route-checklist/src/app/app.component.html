@@ -21,7 +21,11 @@
           [matAutocomplete]="auto"
           (keyup.enter)="onSubmit()"
         />
-        <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete">
+        <mat-autocomplete
+          autoActiveFirstOption
+          #auto="matAutocomplete"
+          (optionSelected)="searchString.setValue($event.option)"
+        >
           @for (option of filteredOptions | async; track option) {
           <mat-option [value]="option">{{ option.properties.name }}</mat-option>
           }

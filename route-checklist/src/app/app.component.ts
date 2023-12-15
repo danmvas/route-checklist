@@ -61,10 +61,8 @@ export class AppComponent implements OnInit {
   }
 
   onSubmit() {
-    console.log(this.searchString.value);
-    console.log(
-      this.routeService.getRoute(this.searchString.value).subscribe(console.log)
-    );
+    console.log('AQUIIII: ' + this.searchString.value);
+    console.log('iioi: ' + this.searchString.value.type);
 
     this.routeArray.push({
       position: this.routeArray.length + 1,

@@ -1,6 +1,8 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment.development';
+import { Observable } from 'rxjs';
+import { RoutePhoton } from '../models/route-photon';
 
 @Injectable({
   providedIn: 'root',
@@ -8,11 +10,14 @@ import { environment } from '../../environments/environment.development';
 export class AppService {
   url = environment.api;
 
-  constructor(private httpClient: HttpClient) {
-    this.httpClient = httpClient;
-  }
+  paramsObj = new URLSearchParams(``);
 
-  getRoute(route: string) {
-    return this.httpClient.get(this.url + '?q=' + route);
+  constructor(private httpClient: HttpClient) {}
+
+  getRoute(route: string): Observable<RoutePhoton> {
+    this.paramsObj.set('q', route);
+    return this.httpClient.get<RoutePhoton>(
+      this.url + '?' + this.paramsObj.toString()
+    );
   }
 }

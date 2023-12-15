@@ -10,10 +10,11 @@ import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { TableItem } from './models/table-item';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { Observable, concatMap, map, startWith, switchMap } from 'rxjs';
+import { Observable, concatMap, map, startWith, switchMap, tap } from 'rxjs';
 import { AsyncPipe } from '@angular/common';
 import { AppService } from './services/app.service';
 import { HttpClient, HttpClientModule, withFetch } from '@angular/common/http';
+import { NONE_TYPE } from '@angular/compiler';
 
 @Component({
   selector: 'app-root',
@@ -34,6 +35,7 @@ import { HttpClient, HttpClientModule, withFetch } from '@angular/common/http';
     AsyncPipe,
     HttpClientModule,
   ],
+  providers: [{ provide: AppService }],
   templateUrl: './app.component.html',
 })
 export class AppComponent implements OnInit {
@@ -45,24 +47,24 @@ export class AppComponent implements OnInit {
   searchString = new FormControl();
 
   options: string[] = ['um', 'dois', 'tres'];
-  filteredOptions?: Observable<string[]>;
+  filteredOptions?: Observable<any[]>;
 
   routes = [];
-  routeService = new AppService(this.httpClient);
 
   routeArray: TableItem[] = [
     { position: 1, name: 'Route 1', checked: true, editMode: false },
     { position: 2, name: 'Route 2', checked: false, editMode: false },
   ];
 
-  constructor(private httpClient: HttpClient) {
+  constructor(private routeService: AppService) {
     this.dataSource.data = this.routeArray;
-    this.httpClient = httpClient;
   }
 
   onSubmit() {
     console.log(this.searchString.value);
-    console.log(this.routeService.getRoute(this.searchString.value));
+    console.log(
+      this.routeService.getRoute(this.searchString.value).subscribe(console.log)
+    );
 
     this.routeArray.push({
       position: this.routeArray.length + 1,
@@ -95,23 +97,17 @@ export class AppComponent implements OnInit {
     console.log('Checkbox state changed:', $event.checked);
   }
 
-  clearInput() {
-    this.searchString.setValue(null);
-  }
+  // clearInput() {
+  //   this.searchString.setValue(null);
+  // }
 
   ngOnInit() {
     this.filteredOptions = this.searchString.valueChanges.pipe(
-      startWith(''),
-      switchMap((value) => this.routeService.getRoute(value)),
-      map((response) => response.toString()),
-      map((options) => this._filter(options))
-    );
-  }
-
-  private _filter(value: string): string[] {
-    const filterValue = value.toLowerCase();
-    return this.options.filter((option) =>
-      option.toLowerCase().includes(filterValue)
+      tap(console.log),
+      concatMap((value) => this.routeService.getRoute(value)),
+      tap(console.log),
+      map((x) => x.features),
+      tap(console.log)
     );
   }
 }

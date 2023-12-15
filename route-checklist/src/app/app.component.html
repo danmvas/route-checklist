@@ -23,10 +23,10 @@
         />
         <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete">
           @for (option of filteredOptions | async; track option) {
-          <mat-option [value]="option">{{ option }}</mat-option>
+          <mat-option [value]="option">{{ option.properties.name }}</mat-option>
           }
         </mat-autocomplete>
-        @if (searchString.value != null) {
+        <!-- @if (searchString.value != null) {
         <button
           matSuffix
           mat-icon-button
@@ -35,7 +35,7 @@
         >
           <mat-icon>close</mat-icon>
         </button>
-        }
+        } -->
       </mat-form-field>
     </div>
     <div>

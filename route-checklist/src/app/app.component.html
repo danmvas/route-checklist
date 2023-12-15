@@ -12,13 +12,26 @@
         required="true"
       >
         <mat-label>Insira a rota</mat-label>
-        <input matInput type="text" [(ngModel)]="searchString" />
-        @if (searchString) {
+        <input
+          matInput
+          placeholder=""
+          type="text"
+          aria-label="Number"
+          [formControl]="searchString"
+          [matAutocomplete]="auto"
+          (keyup.enter)="onSubmit()"
+        />
+        <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete">
+          @for (option of filteredOptions | async; track option) {
+          <mat-option [value]="option">{{ option }}</mat-option>
+          }
+        </mat-autocomplete>
+        @if (searchString.value != null) {
         <button
           matSuffix
           mat-icon-button
           aria-label="Clear"
-          (click)="searchString = ''"
+          (click)="clearInput()"
         >
           <mat-icon>close</mat-icon>
         </button>

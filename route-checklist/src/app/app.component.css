@@ -1,3 +1,7 @@
+body {
+  background-color: #fff;
+}
+
 h1 {
   margin: 20px;
   text-align: center;
@@ -42,6 +46,26 @@ hr {
   outline: none;
 }
 
+.separator {
+  display: flex;
+  flex: 1; /* Isso faz com que o separator ocupe o restante do espaço vertical disponível */
+}
+
+.left-side {
+  flex: 1; /* Isso faz com que o left-side ocupe 50% do espaço disponível no separator */
+  overflow: hidden; /* Para garantir que não haja overflow se o conteúdo for grande */
+}
+
+.right-side {
+  flex: 1; /* Isso faz com que o right-side ocupe 50% do espaço disponível no separator */
+  overflow: hidden; /* Para garantir que não haja overflow se o conteúdo for grande */
+}
+
 #search-bar {
   width: 500px;
+}
+
+#map {
+  height: 500px;
+  width: 100%;
 }

@@ -10,11 +10,13 @@ import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { TableItem } from './models/table-item';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { Observable, concatMap, map, startWith, switchMap, tap } from 'rxjs';
+import { Observable, concatMap, map, tap } from 'rxjs';
 import { AsyncPipe } from '@angular/common';
 import { AppService } from './services/app.service';
-import { HttpClient, HttpClientModule, withFetch } from '@angular/common/http';
-import { NONE_TYPE } from '@angular/compiler';
+import { HttpClientModule } from '@angular/common/http';
+import type LType from 'leaflet';
+
+declare const L: typeof LType;
 
 @Component({
   selector: 'app-root',
@@ -107,5 +109,11 @@ export class AppComponent implements OnInit {
       map((x) => x.features),
       tap(console.log)
     );
+    let mapLeaflet = L.map('map').setView([51.505, -0.09], 13);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution:
+        '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(mapLeaflet);
   }
 }

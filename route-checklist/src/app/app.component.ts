@@ -14,7 +14,10 @@ import { Observable, concatMap, map, tap } from 'rxjs';
 import { AsyncPipe } from '@angular/common';
 import { AppService } from './services/app.service';
 import { HttpClientModule } from '@angular/common/http';
-import type LType from 'leaflet';
+import { decode } from '@mapbox/polyline';
+import { Photon } from 'models/photon';
+import { OSRM } from 'models/osrm';
+import LType from 'leaflet';
 
 declare const L: typeof LType;
 
@@ -46,33 +49,68 @@ export class AppComponent implements OnInit {
   columnsToDisplay: string[] = ['position', 'name', 'checked', 'actions'];
 
   // myControl
-  searchString = new FormControl();
+  searchString = new FormControl<Photon>(null as any, {
+    nonNullable: true,
+  });
 
-  options: string[] = ['um', 'dois', 'tres'];
-  filteredOptions?: Observable<any[]>;
+  autocompleteShownOptions?: Observable<Photon[]>;
 
-  routes = [];
+  markers: LType.Marker[] = [];
+
+  mapLeaflet?: LType.Map;
 
   routeArray: TableItem[] = [
-    { position: 1, name: 'Route 1', checked: true, editMode: false },
-    { position: 2, name: 'Route 2', checked: false, editMode: false },
+    // {
+    //   position: 1,
+    //   name: 'Route 1',
+    //   checked: true,
+    //   editMode: false,
+    //   lat: 51.5,
+    //   lon: -0.09,
+    // },
+    // {
+    //   position: 2,
+    //   name: 'Route 2',
+    //   checked: false,
+    //   editMode: false,
+    //   lat: 52.5,
+    //   lon: -0.09,
+    // },
   ];
+
+  routeCalculatedOSRM?: Observable<OSRM[]>;
 
   constructor(private routeService: AppService) {
     this.dataSource.data = this.routeArray;
   }
 
-  onSubmit() {
-    console.log('AQUIIII: ' + this.searchString.value);
-    console.log('iioi: ' + this.searchString.value.type);
+  ngOnInit() {
+    console.log();
 
+    this.autocompleteShownOptions = this.searchString.valueChanges.pipe(
+      tap(console.log),
+      concatMap((value) => this.routeService.getRoutePhoton(value)),
+      tap(console.log),
+      map((x) => x.features),
+      tap(console.log)
+    );
+    this.leafletInit();
+  }
+
+  onSubmit() {
     this.routeArray.push({
       position: this.routeArray.length + 1,
-      name: this.searchString.value,
-      checked: false,
+      name: this.searchString.value.properties.name,
+      checked: true,
       editMode: false,
+      lon: this.searchString.value.geometry.coordinates[0],
+      lat: this.searchString.value.geometry.coordinates[1],
     });
 
+    this.addMarkerToMap(
+      this.searchString.value.geometry.coordinates[0], //longitude
+      this.searchString.value.geometry.coordinates[1] //latitude
+    );
     this.dataSource.data = [...this.routeArray];
   }
 
@@ -81,6 +119,8 @@ export class AppComponent implements OnInit {
     this.routeArray.splice(index - 1, 1);
     this.routeArray.forEach((item, i) => (item.position = i + 1));
     this.dataSource.data = [...this.routeArray];
+    this.mapLeaflet?.removeLayer(this.markers[index - 1]);
+    this.markers.splice(index - 1, 1);
   }
 
   onEditToggle(element: TableItem) {
@@ -97,23 +137,62 @@ export class AppComponent implements OnInit {
     console.log('Checkbox state changed:', $event.checked);
   }
 
+  displayFn(value: Photon): string {
+    return value && value.properties ? value.properties.name : '';
+  }
+
   // clearInput() {
   //   this.searchString.setValue(null);
   // }
 
-  ngOnInit() {
-    this.filteredOptions = this.searchString.valueChanges.pipe(
-      tap(console.log),
-      concatMap((value) => this.routeService.getRoute(value)),
-      tap(console.log),
-      map((x) => x.features),
-      tap(console.log)
-    );
-    let mapLeaflet = L.map('map').setView([51.505, -0.09], 13);
+  buildGeocodeString(item: Photon) {
+    if (!item || !item.properties) return '';
+    return [item.properties.name, item.properties.type, item.properties.country]
+      .filter((addressComponent) => addressComponent)
+      .join(', ');
+  }
+
+  leafletInit() {
+    this.mapLeaflet = L.map('map').setView([51.505, -0.09], 13);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      attribution:
-        '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    }).addTo(mapLeaflet);
+    }).addTo(this.mapLeaflet);
+  }
+
+  addMarkerToMap(lat: number, lon: number) {
+    if (!this.mapLeaflet) {
+      this.leafletInit();
+    } else {
+      var marker = L.marker([lon, lat], { draggable: true }).addTo(
+        this.mapLeaflet
+      );
+      this.markers.push(marker);
+      marker.bindPopup(this.searchString.value.properties.name).openPopup();
+      // fazer um escuta dos eventos
+      marker.on('dragend', (event) => {
+        // geocode reverso pra atualizar lat/long e o nome na lista
+      });
+    }
+  }
+
+  async calculateRoute() {
+    const checkedMarkers = this.routeArray.filter((marker) => marker.checked);
+
+    if (checkedMarkers.length < 2) {
+      console.error('Please check at least two markers to create a route.');
+      return;
+    }
+
+    const coordinates = checkedMarkers.map((marker) => [
+      marker.lon,
+      marker.lat,
+    ]);
+
+    console.log(coordinates);
+
+    this.routeService.getRouteOSRM(coordinates).subscribe((value) => {
+      console.log(decode(value.routes[0].geometry));
+      // fazer um polyline no leaflet
+    });
   }
 }

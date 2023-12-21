@@ -48,17 +48,18 @@ hr {
 
 .separator {
   display: flex;
-  flex: 1; /* Isso faz com que o separator ocupe o restante do espaço vertical disponível */
+  flex: 1;
 }
 
 .left-side {
-  flex: 1; /* Isso faz com que o left-side ocupe 50% do espaço disponível no separator */
-  overflow: hidden; /* Para garantir que não haja overflow se o conteúdo for grande */
+  flex: 1;
+  overflow: hidden;
 }
 
 .right-side {
-  flex: 1; /* Isso faz com que o right-side ocupe 50% do espaço disponível no separator */
-  overflow: hidden; /* Para garantir que não haja overflow se o conteúdo for grande */
+  flex: 1;
+  overflow: hidden;
+  padding-left: 10px;
 }
 
 #search-bar {

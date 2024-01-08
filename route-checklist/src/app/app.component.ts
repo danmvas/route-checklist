@@ -79,6 +79,7 @@ export class AppComponent implements OnInit {
   ];
 
   routeCalculatedOSRM?: Observable<OSRM[]>;
+  value: any;
 
   constructor(private routeService: AppService) {
     this.dataSource.data = this.routeArray;
@@ -98,20 +99,25 @@ export class AppComponent implements OnInit {
   }
 
   onSubmit() {
-    this.routeArray.push({
-      position: this.routeArray.length + 1,
-      name: this.searchString.value.properties.name,
-      checked: true,
-      editMode: false,
-      lon: this.searchString.value.geometry.coordinates[0],
-      lat: this.searchString.value.geometry.coordinates[1],
-    });
+    if (this.searchString.value) {
+      const firstFeature = this.searchString.value;
 
-    this.addMarkerToMap(
-      this.searchString.value.geometry.coordinates[0], //longitude
-      this.searchString.value.geometry.coordinates[1] //latitude
-    );
-    this.dataSource.data = [...this.routeArray];
+      this.routeArray.push({
+        position: this.routeArray.length + 1,
+        name: firstFeature.properties.name,
+        checked: true,
+        editMode: false,
+        lon: firstFeature.geometry.coordinates[0],
+        lat: firstFeature.geometry.coordinates[1],
+      });
+
+      this.addMarkerToMap(
+        firstFeature.geometry.coordinates[0], // longitude
+        firstFeature.geometry.coordinates[1] // latitude
+      );
+
+      this.dataSource.data = [...this.routeArray];
+    }
   }
 
   onDelete(index: number) {
@@ -138,7 +144,7 @@ export class AppComponent implements OnInit {
   }
 
   displayFn(value: Photon): string {
-    return value && value.properties ? value.properties.name : '';
+    return value ? value.properties.name : '';
   }
 
   // clearInput() {
@@ -163,20 +169,40 @@ export class AppComponent implements OnInit {
     if (!this.mapLeaflet) {
       this.leafletInit();
     } else {
-      var marker = L.marker([lon, lat], { draggable: true }).addTo(
+      const marker = L.marker([lon, lat], { draggable: true }).addTo(
         this.mapLeaflet
       );
       this.markers.push(marker);
       marker.bindPopup(this.searchString.value.properties.name).openPopup();
       // fazer um escuta dos eventos
       marker.on('dragend', (event) => {
+        const draggedMarker = event.target;
+        const latlng = draggedMarker.getLatLng();
+        const index = this.markers.indexOf(draggedMarker);
+
+        if (index !== -1) {
+          this.routeArray[index].lat = latlng.lat;
+          this.routeArray[index].lon = latlng.lng;
+          this.calculateRoute();
+        }
+
         // geocode reverso pra atualizar lat/long e o nome na lista
+        this.routeService.getRoutePhotonReverse(lat, lon).pipe(
+          map((x) => x.properties),
+          map((value) => {
+            console.log(value);
+            return value.name;
+          })
+        );
       });
+
+      this.calculateRoute();
     }
   }
 
   async calculateRoute() {
     const checkedMarkers = this.routeArray.filter((marker) => marker.checked);
+    const mapToUse = this.mapLeaflet ?? L.layerGroup();
 
     if (checkedMarkers.length < 2) {
       console.error('Please check at least two markers to create a route.');
@@ -190,9 +216,18 @@ export class AppComponent implements OnInit {
 
     console.log(coordinates);
 
+    if (mapToUse) {
+      mapToUse.eachLayer((layer) => {
+        if (layer instanceof L.Polyline) {
+          mapToUse.removeLayer(layer);
+        }
+      });
+    }
+
     this.routeService.getRouteOSRM(coordinates).subscribe((value) => {
       console.log(decode(value.routes[0].geometry));
-      // fazer um polyline no leaflet
+
+      L.polyline(decode(value.routes[0].geometry)).addTo(mapToUse);
     });
   }
 }

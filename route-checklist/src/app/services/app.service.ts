@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment.development';
 import { Observable } from 'rxjs';
@@ -21,6 +21,14 @@ export class AppService {
     return this.httpClient.get<Photon>(
       this.photonUrl + '?' + this.paramsObj.toString()
     );
+  }
+
+  getRoutePhotonReverse(lon: number, lat: number): Observable<Photon> {
+    const params = new HttpParams()
+      .set('lat', lat.toString())
+      .set('lon', lon.toString());
+
+    return this.httpClient.get<Photon>(this.photonUrl + 'reverse', { params });
   }
 
   getRouteOSRM(coordinates: number[][]): Observable<OSRM> {

@@ -70,3 +70,11 @@ hr {
   height: 500px;
   width: 100%;
 }
+
+#remove-button {
+  background-color: #ff0000;
+  color: #ffffff;
+  padding: 5px 10px;
+  border: none;
+  cursor: pointer;
+}

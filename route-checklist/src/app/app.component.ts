@@ -10,14 +10,24 @@ import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { TableItem } from './models/table-item';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { Observable, concatMap, map, tap } from 'rxjs';
+import {
+  Observable,
+  concatMap,
+  map,
+  tap,
+  debounceTime,
+  switchMap,
+  of,
+  delay,
+} from 'rxjs';
 import { AsyncPipe } from '@angular/common';
 import { AppService } from './services/app.service';
 import { HttpClientModule } from '@angular/common/http';
 import { decode } from '@mapbox/polyline';
-import { Photon } from 'models/photon';
+import { Feature } from 'models/photon';
 import { OSRM } from 'models/osrm';
-import LType from 'leaflet';
+import LType, { latLng } from 'leaflet';
+import { subscribe } from 'diagnostics_channel';
 
 declare const L: typeof LType;
 
@@ -49,101 +59,103 @@ export class AppComponent implements OnInit {
   columnsToDisplay: string[] = ['position', 'name', 'checked', 'actions'];
 
   // myControl
-  searchString = new FormControl<Photon>(null as any, {
+  searchString = new FormControl<Feature>(null as any, {
     nonNullable: true,
   });
 
-  autocompleteShownOptions?: Observable<Photon[]>;
+  autocompleteShownOptions?: Observable<Feature[]>;
 
-  markers: LType.Marker[] = [];
+  polyline!: LType.Polyline;
 
   mapLeaflet?: LType.Map;
 
-  routeArray: TableItem[] = [
-    // {
-    //   position: 1,
-    //   name: 'Route 1',
-    //   checked: true,
-    //   editMode: false,
-    //   lat: 51.5,
-    //   lon: -0.09,
-    // },
-    // {
-    //   position: 2,
-    //   name: 'Route 2',
-    //   checked: false,
-    //   editMode: false,
-    //   lat: 52.5,
-    //   lon: -0.09,
-    // },
-  ];
+  routeArray: TableItem[] = [];
+  markerArray: LType.Marker[] = [];
+
+  // noMarkerArray = [{ name: String, checked: Boolean, latLng: LType.LatLng }];
 
   routeCalculatedOSRM?: Observable<OSRM[]>;
-  value: any;
 
-  constructor(private routeService: AppService) {
-    this.dataSource.data = this.routeArray;
-  }
+  constructor(private routeService: AppService) {}
 
   ngOnInit() {
-    console.log();
+    const localData = localStorage.getItem('routeArray');
+
+    localData ? (this.routeArray = JSON.parse(localData)) : null;
 
     this.autocompleteShownOptions = this.searchString.valueChanges.pipe(
       tap(console.log),
       concatMap((value) => this.routeService.getRoutePhoton(value)),
-      tap(console.log),
+      // tap(console.log),
       map((x) => x.features),
-      tap(console.log)
+      debounceTime(300)
+      // tap(console.log)
     );
+
     this.leafletInit();
+
+    this.dataSource.data = [...this.routeArray];
+
+    this.routeArray.forEach((element) => {
+      this.addMarkerToMap(element.latLng);
+    });
+
+    // console.log('marker array!!!! ', this.markerArray);
+
+    this.calculateRoute();
   }
 
   onSubmit() {
     if (this.searchString.value) {
-      const firstFeature = this.searchString.value;
+      const stringSubmit = this.searchString.value;
+
+      const marker = new L.Marker([
+        stringSubmit.geometry.coordinates[1], // latitude
+        stringSubmit.geometry.coordinates[0], // longitude
+      ]);
+
+      this.addMarkerToMap(marker.getLatLng());
 
       this.routeArray.push({
-        position: this.routeArray.length + 1,
-        name: firstFeature.properties.name,
+        name: stringSubmit.properties.name,
         checked: true,
-        editMode: false,
-        lon: firstFeature.geometry.coordinates[0],
-        lat: firstFeature.geometry.coordinates[1],
+        latLng: marker.getLatLng(),
+        // marker: marker,
       });
 
-      this.addMarkerToMap(
-        firstFeature.geometry.coordinates[0], // longitude
-        firstFeature.geometry.coordinates[1] // latitude
-      );
-
       this.dataSource.data = [...this.routeArray];
+
+      // this.noMarkerArray = this.routeArray.filter(
+      //   (marker) => marker.name,
+      //   marker.checked,
+      //   marker.latLng
+      // );
+
+      localStorage.setItem('routeArray', JSON.stringify(this.routeArray));
+
+      this.calculateRoute();
     }
   }
 
-  onDelete(index: number) {
-    console.log('Delete');
-    this.routeArray.splice(index - 1, 1);
-    this.routeArray.forEach((item, i) => (item.position = i + 1));
+  onDelete(position: number) {
+    // console.log('to tentando excluirrr');
+    this.mapLeaflet?.removeLayer(this.markerArray[position]);
+    this.routeArray.splice(position, 1);
+    this.markerArray.splice(position, 1);
     this.dataSource.data = [...this.routeArray];
-    this.mapLeaflet?.removeLayer(this.markers[index - 1]);
-    this.markers.splice(index - 1, 1);
-  }
-
-  onEditToggle(element: TableItem) {
-    console.log('Edit');
-    element.editMode = !element.editMode;
-  }
-
-  onEditBlur(element: TableItem) {
-    element.editMode = false;
-    this.dataSource.data = [...this.routeArray];
+    this.calculateRoute();
+    localStorage.setItem('routeArray', JSON.stringify(this.routeArray));
   }
 
   changeEvent($event: any, element: TableItem) {
-    console.log('Checkbox state changed:', $event.checked);
+    // console.log('Checkbox state changed:', $event.checked);
+    element.checked = $event.checked;
+    this.dataSource.data = [...this.routeArray];
+    localStorage.setItem('routeArray', JSON.stringify(this.routeArray));
+    this.calculateRoute();
   }
 
-  displayFn(value: Photon): string {
+  displayFn(value: Feature): string {
     return value ? value.properties.name : '';
   }
 
@@ -151,83 +163,155 @@ export class AppComponent implements OnInit {
   //   this.searchString.setValue(null);
   // }
 
-  buildGeocodeString(item: Photon) {
-    if (!item || !item.properties) return '';
-    return [item.properties.name, item.properties.type, item.properties.country]
+  buildGeocodeString(option: any) {
+    if (!option || !option.properties) return '';
+
+    const addressComponents = [
+      option.properties.name,
+      option.properties.street,
+      option.properties.city,
+      option.properties.district,
+      option.properties.postcode,
+      option.properties.state,
+      option.properties.country,
+    ];
+
+    return addressComponents
       .filter((addressComponent) => addressComponent)
       .join(', ');
   }
 
   leafletInit() {
-    this.mapLeaflet = L.map('map').setView([51.505, -0.09], 13);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-    }).addTo(this.mapLeaflet);
-  }
+    // console.log('router array!!!! ', this.routeArray);
+    if (this.markerArray.length > 0) {
+      // se tiver algo no vetor, vai colocar os marcadores no vetor de marcadores e iniciar a visão do mapa com o primeiro marcador
 
-  addMarkerToMap(lat: number, lon: number) {
-    if (!this.mapLeaflet) {
-      this.leafletInit();
-    } else {
-      const marker = L.marker([lon, lat], { draggable: true }).addTo(
+      this.mapLeaflet = L.map('map').setView(
+        [
+          this.markerArray[0].getLatLng().lat,
+          this.markerArray[0].getLatLng().lng,
+        ],
+        8
+      );
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(
         this.mapLeaflet
       );
-      this.markers.push(marker);
-      marker.bindPopup(this.searchString.value.properties.name).openPopup();
+      this.calculateRoute();
+      // se não existir nada no vetor início padrão (londres)
+    } else {
+      this.mapLeaflet = L.map('map').setView([51.505, -0.09], 13);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(
+        this.mapLeaflet
+      );
+    }
+
+    this.calculateRoute();
+  }
+
+  addMarkerToMap(latlng: L.LatLng) {
+    if (this.mapLeaflet) {
+      const marker = L.marker(latlng, {
+        draggable: true,
+      })
+        .bindPopup(`<button class="popupButton">Excluir</button>`)
+        .openPopup()
+        .addTo(this.mapLeaflet!);
+
+      this.markerArray.push(marker);
+      this.calculateRoute();
+
+      const _this = this;
+
+      const index = this.markerArray.indexOf(marker);
+
+      // marker
+      //   .bindPopup(
+      //     // <div>${this.markers.values.name}</div>
+      //     `<button class="popupButton">Excluir</button>`
+      //   )
+      //   .openPopup();
+
+      // document
+      //   .getElementById('popupButton')!
+      //   .addEventListener('click', function () {
+      //     _this.onDelete(index);
+      //   });
+
+      const popupButtons = Array.from(
+        document.getElementsByClassName('popupButton')
+      );
+
+      console.log(popupButtons);
+
+      function handleButtonClick(index: number) {
+        _this.onDelete(index);
+      }
+
+      // Loop through all elements with the specified class
+      for (let i = 0; i < popupButtons.length; i++) {
+        popupButtons[i].addEventListener(
+          'click',
+          handleButtonClick.bind(null, index)
+        );
+      }
+
       // fazer um escuta dos eventos
       marker.on('dragend', (event) => {
         const draggedMarker = event.target;
         const latlng = draggedMarker.getLatLng();
-        const index = this.markers.indexOf(draggedMarker);
 
-        if (index !== -1) {
-          this.routeArray[index].lat = latlng.lat;
-          this.routeArray[index].lon = latlng.lng;
-          this.calculateRoute();
-        }
+        this.routeService
+          .getRoutePhotonReverse(latlng['lng'], latlng['lat'])
+          .pipe(
+            switchMap((x) => {
+              this.markerArray[index].setLatLng(latlng);
+              this.routeArray[index].name = x.features[0].properties.name;
+              this.routeArray[index].latLng = latlng;
 
-        // geocode reverso pra atualizar lat/long e o nome na lista
-        this.routeService.getRoutePhotonReverse(lat, lon).pipe(
-          map((x) => x.properties),
-          map((value) => {
-            console.log(value);
-            return value.name;
-          })
-        );
+              this.dataSource.data = [...this.routeArray];
+              localStorage.setItem(
+                'routeArray',
+                JSON.stringify(this.routeArray)
+              );
+              return of(null).pipe(delay(0));
+            })
+          )
+          .subscribe(() => {
+            this.calculateRoute();
+          });
       });
-
-      this.calculateRoute();
     }
   }
 
   async calculateRoute() {
     const checkedMarkers = this.routeArray.filter((marker) => marker.checked);
-    const mapToUse = this.mapLeaflet ?? L.layerGroup();
-
-    if (checkedMarkers.length < 2) {
-      console.error('Please check at least two markers to create a route.');
-      return;
-    }
 
     const coordinates = checkedMarkers.map((marker) => [
-      marker.lon,
-      marker.lat,
+      marker.latLng['lng'],
+      marker.latLng['lat'],
     ]);
 
-    console.log(coordinates);
-
-    if (mapToUse) {
-      mapToUse.eachLayer((layer) => {
-        if (layer instanceof L.Polyline) {
-          mapToUse.removeLayer(layer);
-        }
-      });
+    if (this.polyline) {
+      this.mapLeaflet!.removeLayer(this.polyline);
     }
 
-    this.routeService.getRouteOSRM(coordinates).subscribe((value) => {
-      console.log(decode(value.routes[0].geometry));
+    if (coordinates.length > 1) {
+      this.routeService.getRouteOSRM(coordinates).subscribe((value) => {
+        if (this.polyline) {
+          this.mapLeaflet!.removeLayer(this.polyline);
+        }
+        this.polyline = L.polyline(decode(value.routes[0].geometry));
+        this.polyline.addTo(this.mapLeaflet!);
 
-      L.polyline(decode(value.routes[0].geometry)).addTo(mapToUse);
-    });
+        var corner1 = L.latLng(coordinates[2][2], coordinates[2][2]),
+          corner2 = L.latLng(
+            coordinates[0][coordinates.length],
+            coordinates[1][coordinates.length]
+          ),
+          bounds = L.latLngBounds(corner1, corner2);
+
+        this.mapLeaflet!.fitBounds(bounds);
+      });
+    }
   }
 }

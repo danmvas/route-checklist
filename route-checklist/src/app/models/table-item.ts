@@ -1,8 +1,9 @@
+import LType from 'leaflet';
+declare const L: typeof LType;
+
 export interface TableItem {
-  position: number;
   name: string;
   checked: boolean;
-  editMode: boolean;
-  lat: number;
-  lon: number;
+  // marker: LType.Marker;
+  latLng: LType.LatLng;
 }

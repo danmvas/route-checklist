@@ -1,7 +1,12 @@
 export interface Photon {
+  features: Feature[];
+  type: 'FeatureCollection';
+}
+
+export interface Feature {
   geometry: Geometry;
-  properties: Properties;
   type: 'Feature';
+  properties: Properties;
 }
 
 interface Geometry {
@@ -11,12 +16,20 @@ interface Geometry {
 
 interface Properties {
   name: string;
-  osm_type: string;
-  osm_id: number;
-  extent: number[];
-  country: string;
-  osm_key: string;
-  countrycode: string;
-  osm_value: string;
-  type: string;
+  osm_type: string | null;
+  osm_id: number | null;
+  extent: number[] | null;
+  country: string | null;
+  osm_key: string | null;
+  countrycode: string | null;
+  osm_value: string | null;
+  type: string | null;
+  state: string | null;
+  street: string | null;
+  district: string | null;
+  county: string | null;
+  house: string | null;
+  postcode: string | null;
+  housenumber: string | null;
+  city: string | null;
 }

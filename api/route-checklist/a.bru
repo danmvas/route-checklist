@@ -1,0 +1,17 @@
+meta {
+  name: a
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://localhost:2322/api?q=berlin&layer=city&layer=locality
+  body: none
+  auth: none
+}
+
+query {
+  q: berlin
+  layer: city
+  layer: locality
+}

@@ -1,3 +1,5 @@
 export const environment = {
-  api: 'https://photon.komoot.io/api/?q=',
+  photonApi: 'https://photon.komoot.io/api/',
+  photonApiReverse: 'https://photon.komoot.io/reverse/',
+  osrmApi: 'http://router.project-osrm.org/route/v1/driving/',
 };

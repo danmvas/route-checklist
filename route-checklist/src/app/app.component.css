@@ -22,30 +22,6 @@ hr {
   justify-content: center;
 }
 
-.add-button {
-  margin: 20px;
-}
-
-.edit-mode-container {
-  display: flex;
-  align-items: center;
-}
-
-.edit-mode {
-  border-radius: 2px;
-  border: 1px solid #ddd;
-  padding: 5px;
-  padding-left: 15px;
-  height: 30px;
-  margin-right: 5px;
-  font-size: 15px;
-  width: 100%;
-}
-
-.edit-mode:focus {
-  outline: none;
-}
-
 .separator {
   display: flex;
   flex: 1;
@@ -60,21 +36,4 @@ hr {
   flex: 1;
   overflow: hidden;
   padding-left: 10px;
-}
-
-#search-bar {
-  width: 500px;
-}
-
-#map {
-  height: 500px;
-  width: 100%;
-}
-
-#remove-button {
-  background-color: #ff0000;
-  color: #ffffff;
-  padding: 5px 10px;
-  border: none;
-  cursor: pointer;
 }

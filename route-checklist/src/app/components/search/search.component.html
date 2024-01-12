@@ -1,0 +1,55 @@
+<div class="all-search">
+  <div>
+    <mat-form-field
+      appearance="outline"
+      id="search-bar"
+      class="example-form-field"
+      required="true"
+    >
+      <mat-label>Insira a rota</mat-label>
+      <input
+        matInput
+        placeholder=""
+        type="text"
+        aria-label="Number"
+        [formControl]="searchString"
+        [matAutocomplete]="auto"
+        (keyup.enter)="onSubmit()"
+      />
+      <mat-autocomplete
+        autoActiveFirstOption
+        #auto="matAutocomplete"
+        [displayWith]="displayFn"
+      >
+        @for (option of autocompleteShownOptions | async; track option) {
+        <mat-option [value]="option">
+          {{ buildGeocodeString(option) }}
+          @if (option.properties.countrycode) { ({{
+            option.properties.countrycode
+          }}) }
+        </mat-option>
+        }
+      </mat-autocomplete>
+      <!-- @if (searchString.value != null) {
+      <button
+        matSuffix
+        mat-icon-button
+        aria-label="Clear"
+        (click)="clearInput()"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+      } -->
+    </mat-form-field>
+  </div>
+  <div>
+    <button
+      (click)="onSubmit()"
+      class="add-button"
+      mat-raised-button
+      color="primary"
+    >
+      Adicionar
+    </button>
+  </div>
+</div>

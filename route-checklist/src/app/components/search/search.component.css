@@ -1,0 +1,15 @@
+.add-button {
+  margin: 20px;
+}
+
+.all-search {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row;
+  margin-top: 10px;
+}
+
+#search-bar {
+  width: 500px;
+}

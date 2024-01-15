@@ -14,6 +14,8 @@ interface Geometry {
   type: 'Point';
 }
 
+// GeoJSON.FeatureCollection<GeoJSON.Geometry,Properties>
+
 interface Properties {
   name: string;
   osm_type: string | null;

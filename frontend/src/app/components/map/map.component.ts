@@ -70,54 +70,33 @@ export class MapComponent implements OnInit {
   }
 
   leafletInit() {
-    if (this.markerArray.length > 0) {
-      // se tiver algo no vetor, vai colocar os marcadores no vetor de marcadores e iniciar a visão do mapa com o primeiro marcador
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(
-        this.mapLeaflet
-      );
-      this.calculateRoute();
-      // se não existir nada no vetor início padrão (londres)
-    } else {
-      this.mapLeaflet = L.map('map').setView([51.505, -0.09], 13);
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(
-        this.mapLeaflet
-      );
-    }
-
-    this.calculateRoute();
+    this.mapLeaflet = L.map('map').setView([51.505, -0.09], 13);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(
+      this.mapLeaflet
+    );
   }
 
   addMarkerToMap(latlng: L.LatLng) {
     if (this.mapLeaflet) {
-      const _this = this;
-
       const marker = L.marker(latlng, {
         draggable: true,
       }).addTo(this.mapLeaflet);
 
       this.markerArray.push(marker);
-      this.calculateRoute();
 
       var index = this.markerArray.indexOf(marker);
 
       // pipeline de tratamento do popup
       marker
         .bindPopup((layer: LType.Layer) => {
-          var index = this.markerArray.indexOf(marker);
-
           var popupDiv = document.createElement('div');
           popupDiv.innerHTML = `<h4 style="text-align:center;margin-bottom:1px">
-                        ${_this.routeArray[index].name}</h4>`;
+                        ${this.routeArray[index].name}</h4>
+                        <button style="width:100%">Excluir</button>`;
 
-          var btnLine = document.createElement('button');
-          btnLine.innerHTML = 'Excluir';
-          btnLine.style.width = '100%';
-
-          btnLine.onclick = function () {
-            _this.onDelete(index);
+          popupDiv.getElementsByTagName('button').item(0)!.onclick = () => {
+            this.onDelete(index);
           };
-
-          popupDiv.appendChild(btnLine);
 
           return popupDiv;
         })

@@ -8,7 +8,7 @@ Training under Imediatum
 
 ### Front
 
-- [ ] Componentizar
+- [x] Componentizar
 - [x] Abolir o botao calcular rota, calcular automaticamente quando modificar qualquer coisa na lista
 - [x] adicionar debounceTime ao digitar geocode
 - [x] persistencia usando localStorage
@@ -16,6 +16,7 @@ Training under Imediatum
 - [ ] Extra: Design responsivo
 - [ ] Extra: Reordenar or itens
 - [ ] Extra: Chamada para otimizar: <https://project-osrm.org/docs/v5.5.1/api/#trip-service>
+- [ ] Extra: Tratamento de erro quando marcador é arrastado pro meio do mapa
 
 ### Back
 

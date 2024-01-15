@@ -2,9 +2,10 @@ import {
   Component,
   OnInit,
   inject,
-  OnChanges,
   Input,
   SimpleChanges,
+  Output,
+  EventEmitter,
 } from '@angular/core';
 import { MatTableDataSource } from '@angular/material/table';
 import { MapComponent } from 'components/map/map.component';
@@ -16,13 +17,11 @@ import { MatTableModule } from '@angular/material/table';
 import { AppService } from 'services/app.service';
 import { LocalStorageService } from 'services/local-storage.service';
 import { AppComponent } from 'app.component';
-import { Observable } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-table',
   standalone: true,
-  // providers: [AppService, LocalStorageService],
   imports: [
     MapComponent,
     MatCheckboxModule,
@@ -35,40 +34,28 @@ import { MatButtonModule } from '@angular/material/button';
   templateUrl: './table.component.html',
   styleUrl: './table.component.css',
 })
-export class TableComponent implements OnInit {
+export class TableComponent {
+  @Input() routeArray: TableItem[] = [];
+  @Output() handleDelete = new EventEmitter<number>();
+  @Output() handleCheckbox = new EventEmitter<number>();
+
   dataSource = new MatTableDataSource<TableItem>();
-  changeLog: string[] = [];
 
   columnsToDisplay: string[] = ['position', 'name', 'checked', 'actions'];
 
-  localStorageService = inject(LocalStorageService);
-  routeService = inject(AppService);
-
   map = new MapComponent();
 
-  ngOnInit() {
-    this.updateTable();
+  ngOnChanges(changes: SimpleChanges) {
+    console.log('oiii');
+    console.log(changes);
+    this.dataSource.data = [...this.routeArray];
   }
 
-  async changeEvent($event: any, element: TableItem) {
-    element.checked = $event.checked;
-    this.updateTable();
-    this.map.calculateRoute();
+  onDelete(position: number) {
+    this.handleDelete.emit(position);
   }
 
-  async onDelete(position: number) {
-    console.log('yoo');
-    // this.map.mapLeaflet?.removeLayer(this.map.markerArray[position]);
-    // this.map.markerArray.splice(position, 1);
-    this.localStorageService.routeArray.splice(position, 1);
-    console.log('aaaaaaaaaaaaaa');
-    this.updateTable();
-    // this.map.calculateRoute();
-  }
-
-  updateTable() {
-    console.log('mae to no update table');
-    this.dataSource.data = [...this.localStorageService.routeArray];
-    this.localStorageService.setLocalStorage();
+  onCheckbox(position: number) {
+    this.handleCheckbox.emit(position);
   }
 }

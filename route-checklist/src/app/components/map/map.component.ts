@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { TableItem } from 'models/table-item';
 import { switchMap, of, delay } from 'rxjs';
 import { decode } from '@mapbox/polyline';
@@ -17,9 +17,11 @@ declare const L: typeof LType;
   styleUrl: './map.component.css',
 })
 export class MapComponent implements OnInit {
+  @Input({ required: true }) routeArray: any;
+
   polyline!: LType.Polyline;
 
-  mapLeaflet?: LType.Map;
+  mapLeaflet!: LType.Map;
 
   markerArray: LType.Marker[] = [];
 

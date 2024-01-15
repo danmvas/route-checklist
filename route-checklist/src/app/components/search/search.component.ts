@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -46,7 +46,6 @@ declare const L: typeof LType;
   styleUrl: './search.component.css',
 })
 export class SearchComponent implements OnInit {
-  @Input()
   searchString = new FormControl<Feature>(null as any, {
     nonNullable: true,
   });
@@ -83,8 +82,6 @@ export class SearchComponent implements OnInit {
         checked: true,
         latLng: marker.getLatLng(),
       });
-
-      console.log(this.localStorageService.routeArray);
 
       // this.map.addMarkerToMap(marker.getLatLng());
 

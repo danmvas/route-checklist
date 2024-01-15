@@ -1,0 +1,27 @@
+meta {
+  name: patch
+  type: http
+  seq: 3
+}
+
+patch {
+  url: http://127.0.0.1:3000/testing/0
+  body: json
+  auth: none
+}
+
+body:json {
+  [
+    {
+      "num": 90,
+      "words": "ababbabababa",
+      "booleano": false
+    }
+  ]
+}
+
+body:multipart-form {
+  num: 9090090
+  words: meu deus por favor funciona
+  booleano: false
+}

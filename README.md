@@ -29,6 +29,6 @@ testing under Imediatum
   - [x] A cada chamada do GET, retornar um numero incrementado
   - [x] Criar um endpoint POST que seta uma variavel e ao fazer uma chamada GET retorna esta variavel.
   - [ ] Criar uma especie de banco de dados que da pra dar POST para inserir, GET para resgatar, PATCH para atualizar e DELETE para deletar (ver padrão REST)
-  - [ ] Interligar o Front com a paersistencia do back
-  - [ ] Trazudir a persistencia do back em banco MySQL
+  - [ ] Interligar o Front com a persistencia do back
+  - [ ] Traduzir a persistencia do back em banco MySQL
   - [ ] Atualização em tempo real multicliente via WebSocket

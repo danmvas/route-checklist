@@ -17,7 +17,6 @@ import LType from 'leaflet';
 import { MapComponent } from 'components/map/map.component';
 import { Observable, concatMap, debounceTime, map, tap } from 'rxjs';
 import { TableComponent } from 'components/table/table.component';
-import { LocalStorageService } from 'services/local-storage.service';
 import { TableItem } from 'models/table-item';
 
 declare const L: typeof LType;
@@ -57,12 +56,11 @@ export class AppComponent implements OnInit {
     nonNullable: true,
   });
 
-  localStorageService = inject(LocalStorageService);
   routeService = inject(AppService);
 
   map!: MapComponent;
 
-  autocompleteShownOptions?: Observable<Feature[]>;
+  autocompleteShownOptions!: Observable<Feature[]>;
 
   key = 'routeArray';
 
@@ -73,50 +71,57 @@ export class AppComponent implements OnInit {
       ? (this.routeArray = JSON.parse(localStorage.getItem(this.key)!)! || [])
       : (this.routeArray = []);
 
-    console.log(this.routeArray);
-
-    this.autocompleteShownOptions = this.searchString.valueChanges.pipe(
-      tap(console.log),
-      concatMap((value) => this.routeService.getRoutePhoton(value)),
-      // tap(console.log),
-      map((x) => x.features),
-      debounceTime(150)
-      // tap(console.log)
-    );
+    this.getAutoCompleteOptions();
   }
 
   onSubmit() {
     if (this.searchString.value) {
       var stringSubmit = this.searchString.value;
 
+      if (stringSubmit.properties == undefined) {
+        alert('Selecione um local válido');
+        return;
+      }
+
       const marker = new L.Marker([
         stringSubmit.geometry.coordinates[1], // latitude
         stringSubmit.geometry.coordinates[0], // longitude
       ]);
 
-      this.localStorageService.routeArray.push({
+      this.routeArray.push({
         name: stringSubmit.properties.name,
         checked: true,
         latLng: marker.getLatLng(),
       });
 
-      // this.map.addMarkerToMap(marker.getLatLng());
+      this.setLocalStorage();
 
-      this.localStorageService.setLocalStorage();
+      this.routeArray = [...this.routeArray];
 
-      console.log(localStorage.getItem('routeArray'));
-
-      // this.map.calculateRoute();
+      this.getAutoCompleteOptions();
+    } else {
+      alert('Selecione um local válido');
     }
   }
 
+  getAutoCompleteOptions() {
+    this.autocompleteShownOptions = this.searchString.valueChanges.pipe(
+      tap(console.log),
+      debounceTime(200),
+      concatMap((value: string) => this.routeService.getRoutePhoton(value)),
+      map((x) => x.features)
+    );
+  }
+
   onDelete(position: number) {
+    console.log('chegou aqui?');
     this.routeArray.splice(position, 1);
     this.setLocalStorage();
     this.routeArray = [...this.routeArray];
   }
 
   onCheckbox(position: number) {
+    this.routeArray[position].checked = !this.routeArray[position].checked;
     this.routeArray = [...this.routeArray];
     this.setLocalStorage();
   }
@@ -144,7 +149,7 @@ export class AppComponent implements OnInit {
   }
 
   setLocalStorage(): void {
-    console.log('jsonStringy() ', JSON.stringify(this.routeArray));
+    // console.log('jsonStringy() ', JSON.stringify(this.routeArray));
     localStorage.setItem(this.key, JSON.stringify(this.routeArray));
   }
 }

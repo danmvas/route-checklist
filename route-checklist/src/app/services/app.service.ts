@@ -18,6 +18,7 @@ export class AppService {
   constructor(private httpClient: HttpClient) {}
 
   getRoutePhoton(route: string): Observable<Photon> {
+    console.log('ta enviando isso: ', route);
     this.paramsObj.set('q', route);
     return this.httpClient.get<Photon>(
       this.photonUrl + '?' + this.paramsObj.toString()

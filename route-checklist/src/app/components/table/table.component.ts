@@ -1,7 +1,5 @@
 import {
   Component,
-  OnInit,
-  inject,
   Input,
   SimpleChanges,
   Output,
@@ -14,8 +12,6 @@ import { TableItem } from 'models/table-item';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
-import { AppService } from 'services/app.service';
-import { LocalStorageService } from 'services/local-storage.service';
 import { AppComponent } from 'app.component';
 import { MatButtonModule } from '@angular/material/button';
 
@@ -43,11 +39,9 @@ export class TableComponent {
 
   columnsToDisplay: string[] = ['position', 'name', 'checked', 'actions'];
 
-  map = new MapComponent();
-
   ngOnChanges(changes: SimpleChanges) {
-    console.log('oiii');
-    console.log(changes);
+    // console.log('table component detectou mudanças');
+    // console.log(changes);
     this.dataSource.data = [...this.routeArray];
   }
 

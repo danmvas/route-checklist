@@ -70,6 +70,8 @@
       />
     </div>
 
-    <div class="right-side"><app-map [routeArray]="routeArray" /></div>
+    <div class="right-side">
+      <app-map [routeArray]="routeArray" (handleDelete)="onDelete($event)" />
+    </div>
   </div>
 </div>

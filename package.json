@@ -1,9 +1,0 @@
-{
-  "dependencies": {
-    "leaflet": "^1.9.4",
-    "osrm-client": "^0.0.9"
-  },
-  "devDependencies": {
-    "@types/leaflet": "^1.9.8"
-  }
-}

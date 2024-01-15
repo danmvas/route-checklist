@@ -2,7 +2,7 @@
 
 Angular + Node.js route checklist
 
-Training under Imediatum
+testing under Imediatum
 
 ## TO-DO LIST
 
@@ -22,12 +22,12 @@ Training under Imediatum
 
 - [x] Postman/Bruno
 - Node:
-  - [ ] fazer um Hello World
-  - [ ] Le um arquivo, incrementa ele e guarda novamente
+  - [x] fazer um Hello World
+  - [x] Le um arquivo, incrementa ele e guarda novamente
 - Express:
-  - [ ] Criar um endpoint GET que retorna JOSN e fazer uma chamada via Postman
-  - [ ] A cada chamada do GET, retornar um numero incrementado
-  - [ ] Criar um endpoint POST que seta uma variavele e ao fazer uma chamada GET retorna esta variavel.
+  - [x] Criar um endpoint GET que retorna JOSN e fazer uma chamada via Postman
+  - [x] A cada chamada do GET, retornar um numero incrementado
+  - [x] Criar um endpoint POST que seta uma variavel e ao fazer uma chamada GET retorna esta variavel.
   - [ ] Criar uma especie de banco de dados que da pra dar POST para inserir, GET para resgatar, PATCH para atualizar e DELETE para deletar (ver padrão REST)
   - [ ] Interligar o Front com a paersistencia do back
   - [ ] Trazudir a persistencia do back em banco MySQL

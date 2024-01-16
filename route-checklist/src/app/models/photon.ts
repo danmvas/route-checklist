@@ -1,4 +1,9 @@
 export interface Photon {
+  features: Features[];
+  type: 'FeatureCollection';
+}
+
+export interface Features {
   geometry: Geometry;
   properties: Properties;
   type: 'Feature';

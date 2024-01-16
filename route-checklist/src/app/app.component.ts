@@ -10,12 +10,12 @@ import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { TableItem } from './models/table-item';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { Observable, concatMap, map, tap } from 'rxjs';
+import { BehaviorSubject, Observable, concatMap, filter, map, tap } from 'rxjs';
 import { AsyncPipe } from '@angular/common';
 import { AppService } from './services/app.service';
 import { HttpClientModule } from '@angular/common/http';
 import { decode } from '@mapbox/polyline';
-import { Photon } from 'models/photon';
+import { Features, Photon } from 'models/photon';
 import { OSRM } from 'models/osrm';
 import LType from 'leaflet';
 
@@ -49,11 +49,11 @@ export class AppComponent implements OnInit {
   columnsToDisplay: string[] = ['position', 'name', 'checked', 'actions'];
 
   // myControl
-  searchString = new FormControl<Photon>(null as any, {
+  searchString = new FormControl<Features | string>('', {
     nonNullable: true,
   });
 
-  autocompleteShownOptions?: Observable<Photon[]>;
+  autocompleteShownOptions = new BehaviorSubject<Features[]>([]);
 
   markers: LType.Marker[] = [];
 
@@ -80,36 +80,48 @@ export class AppComponent implements OnInit {
 
   routeCalculatedOSRM?: Observable<OSRM[]>;
 
+  polyline?: LType.Polyline;
+
   constructor(private routeService: AppService) {
     this.dataSource.data = this.routeArray;
   }
 
   ngOnInit() {
     console.log();
-
-    this.autocompleteShownOptions = this.searchString.valueChanges.pipe(
-      tap(console.log),
-      concatMap((value) => this.routeService.getRoutePhoton(value)),
-      tap(console.log),
-      map((x) => x.features),
-      tap(console.log)
-    );
+    this.searchString.valueChanges
+      .pipe(
+        filter((x) => typeof x === 'string'),
+        concatMap((value) => this.routeService.getRoutePhoton(value as string)),
+        map((x) => x.features)
+      )
+      .subscribe(this.autocompleteShownOptions);
     this.leafletInit();
   }
 
   onSubmit() {
+    let searchStringValue = this.searchString.value;
+
+    if (typeof searchStringValue == 'string') {
+      searchStringValue = this.autocompleteShownOptions.getValue()[0];
+    }
+
+    if (typeof searchStringValue == 'undefined') {
+      alert('Please select a valid location.');
+      return;
+    }
+
     this.routeArray.push({
       position: this.routeArray.length + 1,
-      name: this.searchString.value.properties.name,
+      name: searchStringValue.properties.name,
       checked: true,
       editMode: false,
-      lon: this.searchString.value.geometry.coordinates[0],
-      lat: this.searchString.value.geometry.coordinates[1],
+      lon: searchStringValue.geometry.coordinates[0],
+      lat: searchStringValue.geometry.coordinates[1],
     });
 
     this.addMarkerToMap(
-      this.searchString.value.geometry.coordinates[0], //longitude
-      this.searchString.value.geometry.coordinates[1] //latitude
+      searchStringValue.geometry.coordinates[0], //longitude
+      searchStringValue.geometry.coordinates[1] //latitude
     );
     this.dataSource.data = [...this.routeArray];
   }
@@ -121,6 +133,7 @@ export class AppComponent implements OnInit {
     this.dataSource.data = [...this.routeArray];
     this.mapLeaflet?.removeLayer(this.markers[index - 1]);
     this.markers.splice(index - 1, 1);
+    // this.calculateRoute();
   }
 
   onEditToggle(element: TableItem) {
@@ -137,7 +150,7 @@ export class AppComponent implements OnInit {
     console.log('Checkbox state changed:', $event.checked);
   }
 
-  displayFn(value: Photon): string {
+  displayFn(value: Features): string {
     return value && value.properties ? value.properties.name : '';
   }
 
@@ -145,7 +158,7 @@ export class AppComponent implements OnInit {
   //   this.searchString.setValue(null);
   // }
 
-  buildGeocodeString(item: Photon) {
+  buildGeocodeString(item: Features) {
     if (!item || !item.properties) return '';
     return [item.properties.name, item.properties.type, item.properties.country]
       .filter((addressComponent) => addressComponent)
@@ -163,14 +176,29 @@ export class AppComponent implements OnInit {
     if (!this.mapLeaflet) {
       this.leafletInit();
     } else {
-      var marker = L.marker([lon, lat], { draggable: true }).addTo(
+      const marker = L.marker([lon, lat], { draggable: true }).addTo(
         this.mapLeaflet
       );
       this.markers.push(marker);
-      marker.bindPopup(this.searchString.value.properties.name).openPopup();
-      // fazer um escuta dos eventos
+
+      const markerId = this.markers.length - 1;
+
+      marker.bindPopup(this.routeArray[markerId].name).openPopup();
+
       marker.on('dragend', (event) => {
-        // geocode reverso pra atualizar lat/long e o nome na lista
+        const updatedMarker = event.target;
+        const newPosition = updatedMarker.getLatLng();
+
+        console.log('The array looked like this: ', this.routeArray);
+        this.reverseGeocode(newPosition.lng, newPosition.lat).subscribe(
+          (value) => {
+            this.routeArray[markerId].lat = newPosition.lat;
+            this.routeArray[markerId].lon = newPosition.lng;
+            this.routeArray[markerId].name = value;
+            this.dataSource.data = [...this.routeArray];
+            this.calculateRoute();
+          }
+        );
       });
     }
   }
@@ -179,7 +207,7 @@ export class AppComponent implements OnInit {
     const checkedMarkers = this.routeArray.filter((marker) => marker.checked);
 
     if (checkedMarkers.length < 2) {
-      console.error('Please check at least two markers to create a route.');
+      alert('Please check at least two markers to create a route.');
       return;
     }
 
@@ -191,8 +219,33 @@ export class AppComponent implements OnInit {
     console.log(coordinates);
 
     this.routeService.getRouteOSRM(coordinates).subscribe((value) => {
-      console.log(decode(value.routes[0].geometry));
-      // fazer um polyline no leaflet
+      console.log(
+        'Polyline decoded successfully! ' + decode(value.routes[0].geometry)
+      );
+      const decodedRoute = decode(value.routes[0].geometry);
+
+      if (this.mapLeaflet) {
+        if (this.polyline == undefined) {
+          this.polyline = L.polyline(decodedRoute).addTo(this.mapLeaflet);
+          this.mapLeaflet.fitBounds(this.polyline.getBounds());
+        } else {
+          this.mapLeaflet?.removeLayer(this.polyline);
+          this.polyline = L.polyline(decodedRoute).addTo(this.mapLeaflet);
+          this.mapLeaflet.fitBounds(this.polyline.getBounds());
+        }
+      } else {
+        console.error('Map undefined.');
+      }
     });
+  }
+
+  reverseGeocode(lat: number, lon: number): Observable<string> {
+    return this.routeService.getRoutePhotonReverse(lat, lon).pipe(
+      map((x) => x.features),
+      map((value) => {
+        console.log(value);
+        return value[0].properties.name;
+      })
+    );
   }
 }

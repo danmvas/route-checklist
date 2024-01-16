@@ -5,7 +5,7 @@ meta {
 }
 
 patch {
-  url: http://127.0.0.1:3000/testing/0
+  url: http://127.0.0.1:3000/task2/0
   body: json
   auth: none
 }
@@ -18,6 +18,18 @@ body:json {
       "booleano": false
     }
   ]
+}
+
+body:text {
+  "num": 90,
+  "words": "ababbabababa",
+  "booleano": false
+}
+
+body:form-urlencoded {
+  num: 54
+  words: omggggg%20hiiii
+  booleano: True
 }
 
 body:multipart-form {

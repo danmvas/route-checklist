@@ -1,5 +1,4 @@
 const express = require("express");
-const bodyParser = require("body-parser");
 const testing = express.Router();
 
 let object = [
@@ -27,21 +26,19 @@ testing.post("/", function (req, res) {
   res.end();
 });
 
-testing.patch("/:index", function (req, res, next) {
+testing.patch("/:index", (req, res) => {
   let index = parseInt(req.params.index);
-  let body = req.body;
 
-  console.log(body);
+  console.log(req.body[index]);
 
-  //   console.log(req.body);
-  // let patchNum = req.body.num;
-  // let patchWords = req.body.words;
-  // let patchBool = req.body.booleano;
+  let patchNum = req.body[index].num;
+  let patchWords = req.body[index].words;
+  let patchBool = req.body[index].booleano;
 
-  // topatch = objectArray[index];
-  // topatch.num = parseFloat(patchNum);
-  // topatch.words = patchWords;
-  // topatch.booleano = stringToBool(patchBool);
+  topatch = objectArray[index];
+  topatch.num = parseFloat(patchNum);
+  topatch.words = patchWords;
+  topatch.booleano = patchBool;
 
   res.end();
 });

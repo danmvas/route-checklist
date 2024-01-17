@@ -5,13 +5,32 @@ meta {
 }
 
 post {
-  url: http://127.0.0.1:3000/task2?num=565&words=aloo&booleano=false
-  body: none
+  url: http://127.0.0.1:3000/task2
+  body: json
   auth: none
 }
 
-query {
-  num: 565
-  words: aloo
-  booleano: false
+body:json {
+  [
+    {
+      "num": 565,
+      "words": "aloo",
+      "booleano": false
+    },
+    {
+      "num": 565,
+      "words": "aloo",
+      "booleano": false
+    },
+    {
+      "num": 565,
+      "words": "aloo",
+      "booleano": false
+    },
+    {
+      "num": 565,
+      "words": "aloo",
+      "booleano": false
+    }
+  ]
 }

@@ -10,14 +10,15 @@ import { MatTableModule } from '@angular/material/table';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { AsyncPipe } from '@angular/common';
-import { AppService } from 'services/app.service';
 import { HttpClientModule } from '@angular/common/http';
-import { Feature } from 'models/photon';
-import LType from 'leaflet';
-import { MapComponent } from 'components/map/map.component';
 import { Observable, concatMap, debounceTime, map, tap } from 'rxjs';
+import { AppService } from 'services/app.service';
+import { StorageService } from 'services/storage.service';
+import { MapComponent } from 'components/map/map.component';
 import { TableComponent } from 'components/table/table.component';
 import { TableItem } from 'models/table-item';
+import { Feature } from 'models/photon';
+import LType from 'leaflet';
 
 declare const L: typeof LType;
 
@@ -57,19 +58,28 @@ export class AppComponent implements OnInit {
   });
 
   routeService = inject(AppService);
+  storageService = inject(StorageService);
 
   map!: MapComponent;
 
   autocompleteShownOptions!: Observable<Feature[]>;
 
-  key = 'routeArray';
+  id = 0;
 
   ngOnInit() {
-    const localStorage = document.defaultView?.localStorage!;
+    console.log('Iniciando Front...');
 
-    localStorage
-      ? (this.routeArray = JSON.parse(localStorage.getItem(this.key)!)! || [])
-      : (this.routeArray = []);
+    this.storageService.get().subscribe((item: any) => {
+      item.forEach((x: any) => {
+        var latlng = L.latLng(x.lat, x.lng);
+        this.routeArray.push({
+          id: x.id,
+          name: x.name,
+          checked: x.checked,
+          latLng: latlng,
+        });
+      });
+    });
 
     this.getAutoCompleteOptions();
   }
@@ -88,15 +98,22 @@ export class AppComponent implements OnInit {
         stringSubmit.geometry.coordinates[0], // longitude
       ]);
 
-      this.routeArray.push({
-        name: stringSubmit.properties.name,
-        checked: true,
-        latLng: marker.getLatLng(),
-      });
-
-      this.setLocalStorage();
-
-      this.routeArray = [...this.routeArray];
+      this.storageService
+        .post({
+          name: stringSubmit.properties.name,
+          checked: 1,
+          lat: marker.getLatLng().lat,
+          lng: marker.getLatLng().lng,
+        })
+        .subscribe((id: any) => {
+          this.routeArray.push({
+            id: id,
+            name: stringSubmit.properties.name,
+            checked: 1,
+            latLng: marker.getLatLng(),
+          });
+          this.routeArray = [...this.routeArray];
+        });
 
       this.getAutoCompleteOptions();
     } else {
@@ -114,16 +131,23 @@ export class AppComponent implements OnInit {
   }
 
   onDelete(position: number) {
-    console.log('chegou aqui?');
+    this.storageService.delete(this.routeArray[position].id).subscribe();
     this.routeArray.splice(position, 1);
-    this.setLocalStorage();
     this.routeArray = [...this.routeArray];
   }
 
   onCheckbox(position: number) {
-    this.routeArray[position].checked = !this.routeArray[position].checked;
+    this.routeArray[position].checked == 1
+      ? (this.routeArray[position].checked = 0)
+      : (this.routeArray[position].checked = 1);
+
     this.routeArray = [...this.routeArray];
-    this.setLocalStorage();
+
+    this.storageService
+      .patch(this.routeArray[position].id, {
+        checked: this.routeArray[position].checked,
+      })
+      .subscribe();
   }
 
   displayFn(value: Feature): string {
@@ -146,10 +170,5 @@ export class AppComponent implements OnInit {
     return addressComponents
       .filter((addressComponent) => addressComponent)
       .join(', ');
-  }
-
-  setLocalStorage(): void {
-    // console.log('jsonStringy() ', JSON.stringify(this.routeArray));
-    localStorage.setItem(this.key, JSON.stringify(this.routeArray));
   }
 }

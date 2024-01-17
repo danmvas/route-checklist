@@ -1,0 +1,17 @@
+meta {
+  name: edit a route
+  type: http
+  seq: 4
+}
+
+patch {
+  url: http://127.0.0.1:3000/routes/1
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "checked": 0
+  }
+}

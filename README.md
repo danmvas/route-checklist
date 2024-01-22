@@ -13,10 +13,10 @@ testing under Imediatum
 - [x] adicionar debounceTime ao digitar geocode
 - [x] persistencia usando localStorage
 - [x] Ao clicar no marcador, no popup ter uma opção de remover o item
+- [ ] Tratamento de erro quando marcador é arrastado pro meio do mapa
 - [ ] Extra: Design responsivo
 - [ ] Extra: Reordenar or itens
 - [ ] Extra: Chamada para otimizar: <https://project-osrm.org/docs/v5.5.1/api/#trip-service>
-- [ ] Extra: Tratamento de erro quando marcador é arrastado pro meio do mapa
 
 ### Back
 

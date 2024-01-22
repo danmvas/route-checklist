@@ -1,24 +1,34 @@
 # route-checklist
 
-Angular + Node.js route checklist
+## Angular + Node.js
 
-testing under Imediatum
+Utilização de Angular 17 e Node+Express para fazer um projeto de criação de rotas ao deixar o usuário escolher determinadas localizações que podem ou não fazer parte da rota desejada, podendo modificar a rota escolhida ao arrastar marcadores ou desativar o checkbox. Vários navegadores (clientes) podem estar conectados ao mesmo tempo e ver as modificações em tempo real.
 
-## TO-DO LIST
+Tecnologias estudadas e utilizadas: Leaflet, OSRM, MySQL, WebSockets.
 
-### Front
+### COMO RODAR
+
+Em cada pasta (frontend e backend) rodar `npm install` para instalar as dependencias. Depois, separadamente em cada pasta, rodar:
+
+Frontend: `npm start`
+
+Backend: `node src/index.js`
+
+### TO-DO LIST
+
+#### Front
 
 - [x] Componentizar
 - [x] Abolir o botao calcular rota, calcular automaticamente quando modificar qualquer coisa na lista
 - [x] adicionar debounceTime ao digitar geocode
 - [x] persistencia usando localStorage
 - [x] Ao clicar no marcador, no popup ter uma opção de remover o item
+- [ ] Tratamento de erro quando marcador é arrastado pro meio do mapa
 - [ ] Extra: Design responsivo
 - [ ] Extra: Reordenar or itens
 - [ ] Extra: Chamada para otimizar: <https://project-osrm.org/docs/v5.5.1/api/#trip-service>
-- [ ] Extra: Tratamento de erro quando marcador é arrastado pro meio do mapa
 
-### Back
+#### Back
 
 - [x] Postman/Bruno
 - Node:

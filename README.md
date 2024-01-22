@@ -31,4 +31,4 @@ testing under Imediatum
   - [x] Criar uma especie de banco de dados que da pra dar POST para inserir, GET para resgatar, PATCH para atualizar e DELETE para deletar (ver padrão REST)
   - [x] Interligar o Front com a persistencia do back
   - [x] Traduzir a persistencia do back em banco MySQL
-  - [ ] Atualização em tempo real multicliente via WebSocket
+  - [x] Atualização em tempo real multicliente via WebSocket

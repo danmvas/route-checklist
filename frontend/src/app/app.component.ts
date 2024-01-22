@@ -64,22 +64,18 @@ export class AppComponent implements OnInit {
 
   autocompleteShownOptions!: Observable<Feature[]>;
 
-  id = 0;
-
   ngOnInit() {
-    console.log('Iniciando Front...');
+    const _this = this;
 
-    this.storageService.get().subscribe((item: any) => {
-      item.forEach((x: any) => {
-        var latlng = L.latLng(x.lat, x.lng);
-        this.routeArray.push({
-          id: x.id,
-          name: x.name,
-          checked: x.checked,
-          latLng: latlng,
-        });
-      });
-    });
+    const ws = new WebSocket('ws://localhost:4200/api/routes/ws');
+    ws.onopen = function () {
+      ws.send('Novo cliente conectado');
+    };
+    ws.onmessage = function (event) {
+      _this.wsGetsMethod(event.data);
+    };
+
+    this.storageService.get().subscribe();
 
     this.getAutoCompleteOptions();
   }
@@ -105,15 +101,7 @@ export class AppComponent implements OnInit {
           lat: marker.getLatLng().lat,
           lng: marker.getLatLng().lng,
         })
-        .subscribe((id: any) => {
-          this.routeArray.push({
-            id: id,
-            name: stringSubmit.properties.name,
-            checked: 1,
-            latLng: marker.getLatLng(),
-          });
-          this.routeArray = [...this.routeArray];
-        });
+        .subscribe();
 
       this.getAutoCompleteOptions();
     } else {
@@ -132,20 +120,12 @@ export class AppComponent implements OnInit {
 
   onDelete(position: number) {
     this.storageService.delete(this.routeArray[position].id).subscribe();
-    this.routeArray.splice(position, 1);
-    this.routeArray = [...this.routeArray];
   }
 
   onCheckbox(position: number) {
-    this.routeArray[position].checked == 1
-      ? (this.routeArray[position].checked = 0)
-      : (this.routeArray[position].checked = 1);
-
-    this.routeArray = [...this.routeArray];
-
     this.storageService
       .patch(this.routeArray[position].id, {
-        checked: this.routeArray[position].checked,
+        checked: this.changesCheck(this.routeArray[position].checked),
       })
       .subscribe();
   }
@@ -170,5 +150,73 @@ export class AppComponent implements OnInit {
     return addressComponents
       .filter((addressComponent) => addressComponent)
       .join(', ');
+  }
+
+  wsGetsMethod(data: string) {
+    let method = JSON.parse(data);
+
+    switch (method[0]) {
+      case 'GET':
+        if (this.routeArray.length == 0) {
+          method[1].forEach((x: any) => {
+            var latlng = L.latLng(x.lat, x.lng);
+            this.routeArray.push({
+              id: x.id,
+              name: x.name,
+              checked: x.checked,
+              latLng: latlng,
+            });
+          });
+        }
+
+        this.routeArray = [...this.routeArray];
+        break;
+
+      case 'POST':
+        let array_post = JSON.parse(method[2]);
+
+        this.routeArray.push({
+          id: method[1],
+          name: array_post.name,
+          checked: array_post.checked,
+          latLng: L.latLng(array_post.lat, array_post.lng),
+        });
+        this.routeArray = [...this.routeArray];
+        break;
+
+      case 'PATCH':
+        let array_patch = JSON.parse(method[2]);
+
+        if (array_patch.checked == 1 || array_patch.checked == 0) {
+          this.routeArray[this.findMyIndex(method)].checked =
+            array_patch.checked;
+        } else {
+          this.routeArray[this.findMyIndex(method)].name = array_patch.name;
+          this.routeArray[this.findMyIndex(method)].latLng = L.latLng(
+            array_patch.lat,
+            array_patch.lng
+          );
+        }
+        this.routeArray = [...this.routeArray];
+        break;
+
+      case 'DELETE':
+        this.routeArray.splice(this.findMyIndex(method), 1);
+        this.routeArray = [...this.routeArray];
+        break;
+
+      default:
+        console.log('Método não implementado.');
+        break;
+    }
+  }
+
+  findMyIndex(method: string[]): number {
+    return this.routeArray.findIndex((x) => x.id == parseInt(method[1]));
+  }
+
+  changesCheck(check: number): number {
+    check == 1 ? (check = 0) : (check = 1);
+    return check;
   }
 }

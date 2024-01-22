@@ -29,12 +29,10 @@ hr {
 
 .left-side {
   flex: 1;
-  overflow: hidden;
 }
 
 .right-side {
   flex: 1;
-  overflow: hidden;
   padding-left: 10px;
 }
 .add-button {

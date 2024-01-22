@@ -113,41 +113,24 @@ export class MapComponent implements OnInit {
             .pipe(
               switchMap((x) => {
                 this.markerArray[index].setLatLng(latlng);
-                this.routeArray[index].latLng = latlng;
 
-                if (x.features[0].properties.name) {
-                  this.routeArray[index].name = x.features[0].properties.name;
-                  this.storageService
-                    .patch(this.routeArray[index].id, {
-                      name: x.features[0].properties.name,
-                      lat: latlng['lat'],
-                      lng: latlng['lng'],
-                    })
-                    .subscribe();
-                } else {
-                  this.routeArray[index].name =
-                    x.features[0].properties.street +
-                    ' ' +
-                    x.features[0].properties.housenumber!;
+                let patchname = '';
 
-                  this.storageService
-                    .patch(this.routeArray[index].id, {
-                      name:
-                        x.features[0].properties.street +
-                        ' ' +
-                        x.features[0].properties.housenumber!,
-                      lat: latlng['lat'],
-                      lng: latlng['lng'],
-                    })
-                    .subscribe();
-                }
+                x.features[0].properties.name
+                  ? (patchname = x.features[0].properties.name)
+                  : (patchname =
+                      x.features[0].properties.street +
+                      ' ' +
+                      x.features[0].properties.housenumber);
 
-                return of(null).pipe(delay(0));
+                return this.storageService.patch(this.routeArray[index].id, {
+                  name: patchname,
+                  lat: latlng['lat'],
+                  lng: latlng['lng'],
+                });
               })
             )
-            .subscribe(() => {
-              this.calculateRoute();
-            });
+            .subscribe();
         });
 
       // index == 0 ? marker.setIcon(L.icon({ iconUrl: 'starter.png' })) : '';

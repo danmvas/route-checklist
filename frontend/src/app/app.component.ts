@@ -64,18 +64,22 @@ export class AppComponent implements OnInit {
 
   autocompleteShownOptions!: Observable<Feature[]>;
 
-  key = 'routeArray';
+  id = 0;
 
   ngOnInit() {
-    // const localStorage = document.defaultView?.localStorage!;
+    console.log('Iniciando Front...');
 
-    // localStorage
-    //   ? (this.routeArray = JSON.parse(localStorage.getItem(this.key)!)! || [])
-    //   : (this.routeArray = []);
-
-    const storage = this.storageService.get().subscribe(console.log);
-
-    // console.log(storage);
+    this.storageService.get().subscribe((item: any) => {
+      item.forEach((x: any) => {
+        var latlng = L.latLng(x.lat, x.lng);
+        this.routeArray.push({
+          id: x.id,
+          name: x.name,
+          checked: x.checked,
+          latLng: latlng,
+        });
+      });
+    });
 
     this.getAutoCompleteOptions();
   }
@@ -97,13 +101,19 @@ export class AppComponent implements OnInit {
       this.storageService
         .post({
           name: stringSubmit.properties.name,
-          checked: true,
+          checked: 1,
           lat: marker.getLatLng().lat,
           lng: marker.getLatLng().lng,
         })
-        .subscribe(console.log);
-
-      this.routeArray = [...this.routeArray];
+        .subscribe((id: any) => {
+          this.routeArray.push({
+            id: id,
+            name: stringSubmit.properties.name,
+            checked: 1,
+            latLng: marker.getLatLng(),
+          });
+          this.routeArray = [...this.routeArray];
+        });
 
       this.getAutoCompleteOptions();
     } else {
@@ -121,16 +131,23 @@ export class AppComponent implements OnInit {
   }
 
   onDelete(position: number) {
-    console.log('chegou aqui?');
+    this.storageService.delete(this.routeArray[position].id).subscribe();
     this.routeArray.splice(position, 1);
-    this.setLocalStorage();
     this.routeArray = [...this.routeArray];
   }
 
   onCheckbox(position: number) {
-    this.routeArray[position].checked = !this.routeArray[position].checked;
+    this.routeArray[position].checked == 1
+      ? (this.routeArray[position].checked = 0)
+      : (this.routeArray[position].checked = 1);
+
     this.routeArray = [...this.routeArray];
-    this.setLocalStorage();
+
+    this.storageService
+      .patch(this.routeArray[position].id, {
+        checked: this.routeArray[position].checked,
+      })
+      .subscribe();
   }
 
   displayFn(value: Feature): string {
@@ -153,10 +170,5 @@ export class AppComponent implements OnInit {
     return addressComponents
       .filter((addressComponent) => addressComponent)
       .join(', ');
-  }
-
-  setLocalStorage(): void {
-    // console.log('jsonStringy() ', JSON.stringify(this.routeArray));
-    localStorage.setItem(this.key, JSON.stringify(this.routeArray));
   }
 }

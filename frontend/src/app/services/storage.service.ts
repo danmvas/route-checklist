@@ -1,7 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
-import { Photon } from 'models/photon';
 import { TableItem } from 'models/table-item';
 
 @Injectable({
@@ -22,21 +21,11 @@ export class StorageService {
     return this.httpClient.post(this.routesUrl, routeItem);
   }
 
-  patch(index: number, routeItem: Photon) {
-    const params = new HttpParams().set('index', index);
-    return this.httpClient.patch(
-      this.routesUrl + this.paramsObj.toString(),
-      routeItem,
-      {
-        params,
-      }
-    );
+  patch(index: number, routeItem: any) {
+    return this.httpClient.patch(this.routesUrl + index.toString(), routeItem);
   }
 
   delete(index: number) {
-    const params = new HttpParams().set('index', index);
-    return this.httpClient.delete(this.routesUrl + this.paramsObj.toString(), {
-      params,
-    });
+    return this.httpClient.delete(this.routesUrl + index.toString());
   }
 }

@@ -7,10 +7,7 @@ routes.get("/", (req, res) => {
   const sql = "SELECT * FROM routes";
 
   connection.query(sql, (err, results) => {
-    if (err) {
-      res.json("Método GET executado com erro");
-      throw err;
-    }
+    if (err) throw err;
     res.json(results);
   });
 });
@@ -20,10 +17,7 @@ routes.get("/:id", (req, res) => {
   const sql = `SELECT * FROM routes WHERE id = ?`;
 
   connection.query(sql, [id], (err, results) => {
-    if (err) {
-      res.json("Método GET executado com erro");
-      throw err;
-    }
+    if (err) throw err;
     res.json(results);
   });
 });
@@ -31,29 +25,21 @@ routes.get("/:id", (req, res) => {
 routes.post("/", (req, res) => {
   const { name, checked, lat, lng } = req.body;
   const sql = `INSERT INTO routes (name, checked, lat, lng) VALUE (?, ?, ?, ?)`;
-  console.log(sql);
 
-  connection.query(sql, [name, checked, lat, lng], (err) => {
-    if (err) {
-      res.json("Método POST executado com erro");
-      throw err;
-    }
-    res.json("Rota criada com sucesso");
+  connection.query(sql, [name, checked, lat, lng], (err, results) => {
+    if (err) throw err;
+
+    res.json(results.insertId);
   });
 });
 
 routes.patch("/:id", (req, res) => {
-  const { name, checked, lat, lng } = req.body;
-
   const { id } = req.params;
 
-  const sql = `UPDATE routes SET name = ?, checked = ?, lat = ?, lng = ? WHERE id = ?`;
+  let sql = `UPDATE routes SET ? WHERE id=?;`;
 
-  connection.query(sql, [name, checked, lat, lng, id], (err) => {
-    if (err) {
-      res.json("Método PATCH executado com erro");
-      throw err;
-    }
+  connection.query(sql, [req.body, id], (err) => {
+    if (err) throw err;
     res.json("Patch feito com sucesso");
   });
 });
@@ -63,10 +49,7 @@ routes.delete("/:id", (req, res) => {
   const sql = `DELETE FROM routes WHERE id = ?`;
 
   connection.query(sql, [id], (err) => {
-    if (err) {
-      res.json("Método DELETE executado com erro");
-      throw err;
-    }
+    if (err) throw err;
     res.json("Excluído com sucesso");
   });
 });

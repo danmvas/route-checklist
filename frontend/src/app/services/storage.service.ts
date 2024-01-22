@@ -1,7 +1,8 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { environment } from '../../environments/environment.development';
+import { environment } from '../../environments/environment';
 import { Photon } from 'models/photon';
+import { TableItem } from 'models/table-item';
 
 @Injectable({
   providedIn: 'root',
@@ -17,8 +18,8 @@ export class StorageService {
     return this.httpClient.get(this.routesUrl);
   }
 
-  post(routeItem: Photon) {
-    return this.httpClient.patch(this.routesUrl, routeItem);
+  post(routeItem: any) {
+    return this.httpClient.post(this.routesUrl, routeItem);
   }
 
   patch(index: number, routeItem: Photon) {

@@ -4,6 +4,8 @@ declare const L: typeof LType;
 export interface TableItem {
   name: string;
   checked: boolean;
-  // marker: LType.Marker;
   latLng: LType.LatLng;
+  // lat: number;
+  // lng: number;
+  // marker: LType.Marker;
 }

@@ -1,54 +1,84 @@
 import express from "express";
+import connection from "./connection.js";
 const routes = express.Router();
 export default routes;
 
-const routeArray = [];
+routes.get("/", (req, res) => {
+  const sql = "SELECT * FROM routes";
 
-// name: string;
-// checked: boolean;
-// latLng: LType.LatLng;
-
-routes.get("/", function (req, res) {
-  res.json(routeArray);
-  res.end();
+  connection.query(sql, (err, results) => {
+    if (err) {
+      res.json("Método GET executado com erro");
+      throw err;
+    }
+    res.json(results);
+  });
 });
 
-routes.get("/:index", function (req, res) {
-  let index = parseInt(req.params.index);
-  res.json(routeArray[index]);
-  res.end();
+routes.get("/:id", (req, res) => {
+  const { id } = req.params;
+  const sql = `SELECT * FROM routes WHERE id = ?`;
+
+  connection.query(sql, [id], (err, results) => {
+    if (err) {
+      res.json("Método GET executado com erro");
+      throw err;
+    }
+    res.json(results);
+  });
 });
 
-routes.post("/", function (req, res) {
-  for (let i = 0; i < req.body.length; i++) {
-    routeArray.push({
-      name: req.body[i].name,
-      checked: req.body[i].checked,
-      latLng: req.body[i].latLng,
-    });
-  }
-  res.end();
+routes.post("/", (req, res) => {
+  const { name, checked, lat, lng } = req.body;
+  const sql = `INSERT INTO routes (name, checked, lat, lng) VALUE (?, ?, ?, ?)`;
+  console.log(sql);
+
+  connection.query(sql, [name, checked, lat, lng], (err) => {
+    if (err) {
+      res.json("Método POST executado com erro");
+      throw err;
+    }
+    res.json("Rota criada com sucesso");
+  });
 });
 
-routes.patch("/:index", (req, res) => {
-  let index = parseInt(req.params.index);
+routes.patch("/:id", (req, res) => {
+  const { name, checked, lat, lng } = req.body;
 
-  console.log(req.body[index]);
+  const { id } = req.params;
 
-  let patchName = req.body.name;
-  let patchLatlng = req.body.latLng;
-  let patchChecked = req.body.checked;
+  const sql = `UPDATE routes SET name = ?, checked = ?, lat = ?, lng = ? WHERE id = ?`;
 
-  topatch = routeArray[index];
-  topatch.name = parseFloat(patchName);
-  topatch.latLng = patchLatlng;
-  topatch.checked = patchChecked;
-
-  res.end();
+  connection.query(sql, [name, checked, lat, lng, id], (err) => {
+    if (err) {
+      res.json("Método PATCH executado com erro");
+      throw err;
+    }
+    res.json("Patch feito com sucesso");
+  });
 });
 
-routes.delete("/:index", function (req, res) {
-  const index = parseInt(req.params.index);
-  routeArray.splice(index, 1);
-  res.end();
+routes.delete("/:id", (req, res) => {
+  const { id } = req.params;
+  const sql = `DELETE FROM routes WHERE id = ?`;
+
+  connection.query(sql, [id], (err) => {
+    if (err) {
+      res.json("Método DELETE executado com erro");
+      throw err;
+    }
+    res.json("Excluído com sucesso");
+  });
+});
+
+routes.delete("/", (req, res) => {
+  const sql = `DELETE FROM routes`;
+
+  connection.query(sql, (err) => {
+    if (err) {
+      res.json("Método DELETE executado com erro");
+      throw err;
+    }
+    res.json("Excluído com sucesso");
+  });
 });

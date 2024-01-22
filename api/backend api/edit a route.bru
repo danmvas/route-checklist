@@ -6,6 +6,17 @@ meta {
 
 patch {
   url: http://127.0.0.1:3000/routes/1
-  body: none
+  body: json
   auth: none
+}
+
+body:json {
+  {
+    "name": "London1",
+    "checked": true,
+    "latLng": {
+      "lat": 51.5074456,
+      "lng": -0.1277653
+    }
+  }
 }

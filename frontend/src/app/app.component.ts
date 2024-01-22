@@ -10,14 +10,15 @@ import { MatTableModule } from '@angular/material/table';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { AsyncPipe } from '@angular/common';
-import { AppService } from 'services/app.service';
 import { HttpClientModule } from '@angular/common/http';
-import { Feature } from 'models/photon';
-import LType from 'leaflet';
-import { MapComponent } from 'components/map/map.component';
 import { Observable, concatMap, debounceTime, map, tap } from 'rxjs';
+import { AppService } from 'services/app.service';
+import { StorageService } from 'services/storage.service';
+import { MapComponent } from 'components/map/map.component';
 import { TableComponent } from 'components/table/table.component';
 import { TableItem } from 'models/table-item';
+import { Feature } from 'models/photon';
+import LType from 'leaflet';
 
 declare const L: typeof LType;
 
@@ -57,6 +58,7 @@ export class AppComponent implements OnInit {
   });
 
   routeService = inject(AppService);
+  storageService = inject(StorageService);
 
   map!: MapComponent;
 
@@ -65,11 +67,15 @@ export class AppComponent implements OnInit {
   key = 'routeArray';
 
   ngOnInit() {
-    const localStorage = document.defaultView?.localStorage!;
+    // const localStorage = document.defaultView?.localStorage!;
 
-    localStorage
-      ? (this.routeArray = JSON.parse(localStorage.getItem(this.key)!)! || [])
-      : (this.routeArray = []);
+    // localStorage
+    //   ? (this.routeArray = JSON.parse(localStorage.getItem(this.key)!)! || [])
+    //   : (this.routeArray = []);
+
+    const storage = this.storageService.get().subscribe(console.log);
+
+    // console.log(storage);
 
     this.getAutoCompleteOptions();
   }
@@ -88,13 +94,14 @@ export class AppComponent implements OnInit {
         stringSubmit.geometry.coordinates[0], // longitude
       ]);
 
-      this.routeArray.push({
-        name: stringSubmit.properties.name,
-        checked: true,
-        latLng: marker.getLatLng(),
-      });
-
-      this.setLocalStorage();
+      this.storageService
+        .post({
+          name: stringSubmit.properties.name,
+          checked: true,
+          lat: marker.getLatLng().lat,
+          lng: marker.getLatLng().lng,
+        })
+        .subscribe(console.log);
 
       this.routeArray = [...this.routeArray];
 

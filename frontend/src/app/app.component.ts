@@ -10,14 +10,15 @@ import { MatTableModule } from '@angular/material/table';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { AsyncPipe } from '@angular/common';
-import { AppService } from 'services/app.service';
 import { HttpClientModule } from '@angular/common/http';
-import { Feature } from 'models/photon';
-import LType from 'leaflet';
-import { MapComponent } from 'components/map/map.component';
 import { Observable, concatMap, debounceTime, map, tap } from 'rxjs';
+import { AppService } from 'services/app.service';
+import { StorageService } from 'services/storage.service';
+import { MapComponent } from 'components/map/map.component';
 import { TableComponent } from 'components/table/table.component';
 import { TableItem } from 'models/table-item';
+import { Feature } from 'models/photon';
+import LType from 'leaflet';
 
 declare const L: typeof LType;
 
@@ -57,19 +58,24 @@ export class AppComponent implements OnInit {
   });
 
   routeService = inject(AppService);
+  storageService = inject(StorageService);
 
   map!: MapComponent;
 
   autocompleteShownOptions!: Observable<Feature[]>;
 
-  key = 'routeArray';
-
   ngOnInit() {
-    const localStorage = document.defaultView?.localStorage!;
+    const _this = this;
 
-    localStorage
-      ? (this.routeArray = JSON.parse(localStorage.getItem(this.key)!)! || [])
-      : (this.routeArray = []);
+    const ws = new WebSocket('ws://localhost:4200/api/routes/ws');
+    ws.onopen = function () {
+      ws.send('Novo cliente conectado');
+    };
+    ws.onmessage = function (event) {
+      _this.wsGetsMethod(event.data);
+    };
+
+    this.storageService.get().subscribe();
 
     this.getAutoCompleteOptions();
   }
@@ -88,15 +94,14 @@ export class AppComponent implements OnInit {
         stringSubmit.geometry.coordinates[0], // longitude
       ]);
 
-      this.routeArray.push({
-        name: stringSubmit.properties.name,
-        checked: true,
-        latLng: marker.getLatLng(),
-      });
-
-      this.setLocalStorage();
-
-      this.routeArray = [...this.routeArray];
+      this.storageService
+        .post({
+          name: stringSubmit.properties.name,
+          checked: 1,
+          lat: marker.getLatLng().lat,
+          lng: marker.getLatLng().lng,
+        })
+        .subscribe();
 
       this.getAutoCompleteOptions();
     } else {
@@ -114,16 +119,15 @@ export class AppComponent implements OnInit {
   }
 
   onDelete(position: number) {
-    console.log('chegou aqui?');
-    this.routeArray.splice(position, 1);
-    this.setLocalStorage();
-    this.routeArray = [...this.routeArray];
+    this.storageService.delete(this.routeArray[position].id).subscribe();
   }
 
   onCheckbox(position: number) {
-    this.routeArray[position].checked = !this.routeArray[position].checked;
-    this.routeArray = [...this.routeArray];
-    this.setLocalStorage();
+    this.storageService
+      .patch(this.routeArray[position].id, {
+        checked: this.changesCheck(this.routeArray[position].checked),
+      })
+      .subscribe();
   }
 
   displayFn(value: Feature): string {
@@ -148,8 +152,71 @@ export class AppComponent implements OnInit {
       .join(', ');
   }
 
-  setLocalStorage(): void {
-    // console.log('jsonStringy() ', JSON.stringify(this.routeArray));
-    localStorage.setItem(this.key, JSON.stringify(this.routeArray));
+  wsGetsMethod(data: string) {
+    let method = JSON.parse(data);
+
+    switch (method[0]) {
+      case 'GET':
+        if (this.routeArray.length == 0) {
+          method[1].forEach((x: any) => {
+            var latlng = L.latLng(x.lat, x.lng);
+            this.routeArray.push({
+              id: x.id,
+              name: x.name,
+              checked: x.checked,
+              latLng: latlng,
+            });
+          });
+        }
+
+        this.routeArray = [...this.routeArray];
+        break;
+
+      case 'POST':
+        let array_post = JSON.parse(method[2]);
+
+        this.routeArray.push({
+          id: method[1],
+          name: array_post.name,
+          checked: array_post.checked,
+          latLng: L.latLng(array_post.lat, array_post.lng),
+        });
+        this.routeArray = [...this.routeArray];
+        break;
+
+      case 'PATCH':
+        let array_patch = JSON.parse(method[2]);
+
+        if (array_patch.checked == 1 || array_patch.checked == 0) {
+          this.routeArray[this.findMyIndex(method)].checked =
+            array_patch.checked;
+        } else {
+          this.routeArray[this.findMyIndex(method)].name = array_patch.name;
+          this.routeArray[this.findMyIndex(method)].latLng = L.latLng(
+            array_patch.lat,
+            array_patch.lng
+          );
+        }
+        this.routeArray = [...this.routeArray];
+        break;
+
+      case 'DELETE':
+        this.routeArray.splice(this.findMyIndex(method), 1);
+        this.routeArray = [...this.routeArray];
+        break;
+
+      default:
+        console.log('Método não implementado.');
+        break;
+    }
+  }
+
+  findMyIndex(method: string[]): number {
+    return this.routeArray.findIndex((x) => x.id == parseInt(method[1]));
+  }
+
+  changesCheck(check: number): number {
+    check == 1 ? (check = 0) : (check = 1);
+    return check;
   }
 }

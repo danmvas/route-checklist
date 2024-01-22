@@ -13,6 +13,7 @@ import { decode } from '@mapbox/polyline';
 import { AppService } from 'services/app.service';
 import { TableComponent } from 'components/table/table.component';
 import LType from 'leaflet';
+import { StorageService } from 'services/storage.service';
 declare const L: typeof LType;
 
 @Component({
@@ -36,6 +37,7 @@ export class MapComponent implements OnInit {
   popupButtonArray: HTMLElement[] = [];
 
   routeService = inject(AppService);
+  storageService = inject(StorageService);
 
   ngOnChanges(changes: SimpleChanges) {
     // console.log(changes);
@@ -111,26 +113,24 @@ export class MapComponent implements OnInit {
             .pipe(
               switchMap((x) => {
                 this.markerArray[index].setLatLng(latlng);
-                this.routeArray[index].latLng = latlng;
+
+                let patchname = '';
 
                 x.features[0].properties.name
-                  ? (this.routeArray[index].name =
-                      x.features[0].properties.name)
-                  : (this.routeArray[index].name =
+                  ? (patchname = x.features[0].properties.name)
+                  : (patchname =
                       x.features[0].properties.street +
                       ' ' +
-                      x.features[0].properties.housenumber!);
+                      x.features[0].properties.housenumber);
 
-                localStorage.setItem(
-                  'routeArray',
-                  JSON.stringify(this.routeArray)
-                );
-                return of(null).pipe(delay(0));
+                return this.storageService.patch(this.routeArray[index].id, {
+                  name: patchname,
+                  lat: latlng['lat'],
+                  lng: latlng['lng'],
+                });
               })
             )
-            .subscribe(() => {
-              this.calculateRoute();
-            });
+            .subscribe();
         });
 
       // index == 0 ? marker.setIcon(L.icon({ iconUrl: 'starter.png' })) : '';
@@ -138,7 +138,9 @@ export class MapComponent implements OnInit {
   }
 
   calculateRoute() {
-    const checkedMarkers = this.routeArray.filter((marker) => marker.checked);
+    const checkedMarkers = this.routeArray.filter(
+      (marker) => marker.checked == 1
+    );
 
     const coordinates = checkedMarkers.map((marker) => [
       marker.latLng['lng'],

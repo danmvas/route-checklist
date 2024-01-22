@@ -1,0 +1,37 @@
+meta {
+  name: patch
+  type: http
+  seq: 3
+}
+
+patch {
+  url: http://127.0.0.1:3000/task2/2
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "num": 546546545465,
+    "words": "ababbabababa",
+    "booleano": false
+  }
+}
+
+body:text {
+  "num": 90,
+  "words": "ababbabababa",
+  "booleano": false
+}
+
+body:form-urlencoded {
+  num: 54
+  words: omggggg%20hiiii
+  booleano: True
+}
+
+body:multipart-form {
+  num: 9090090
+  words: meu deus por favor funciona
+  booleano: false
+}
